@@ -92,3 +92,18 @@ ggplot(ts_long, aes(x = value, fill = variable)) +
   geom_text(data = skew_df, aes(x = Inf, y = Inf, label = paste("Skew:", skewness)),
             hjust = 1.1, vjust = 1.5, size = 3, inherit.aes = FALSE) +
   theme_minimal()
+
+# Task 3: Approximate Bayesian Computation (ABC)
+
+# Task 3.1: Identifying top 2 parameters by magnitude
+theta_5_no_intercept <- theta_5[-1] 
+theta_5_abs <- abs(theta_5_no_intercept)
+
+top_2_indices <- order(theta_5_abs, decreasing = TRUE)[1:2]
+param_1_index <- top_2_indices[1] + 1
+param_2_index <- top_2_indices[2] + 1
+
+param_1_value <- theta_5[param_1_index]
+param_2_value <- theta_5[param_2_index]
+
+print(paste("Selected for ABC: beta_", top_2_indices[1], "and beta_", top_2_indices[2]))
