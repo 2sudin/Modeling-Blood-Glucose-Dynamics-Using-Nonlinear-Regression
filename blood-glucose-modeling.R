@@ -152,3 +152,10 @@ par(mfrow = c(2, 2), mar = c(4, 4, 2, 1))
 # Histograms
 hist(accepted_params[, 1], breaks = 30, col = "lightblue", main = "Posterior Beta 1")
 hist(accepted_params[, 2], breaks = 30, col = "lightgreen", main = "Posterior Beta 2")
+
+# Joint Scatter and Density
+plot(accepted_params[, 1], accepted_params[, 2], col = rgb(0,0,1,0.2), pch=16, main="Joint Posterior")
+kde <- kde2d(accepted_params[, 1], accepted_params[, 2], n = 50)
+contour(kde, col = "blue", main = "Posterior Contours")
+
+par(mfrow = c(1, 1))
