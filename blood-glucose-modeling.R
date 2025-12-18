@@ -159,3 +159,8 @@ kde <- kde2d(accepted_params[, 1], accepted_params[, 2], n = 50)
 contour(kde, col = "blue", main = "Posterior Contours")
 
 par(mfrow = c(1, 1))
+
+# Task 3.5: Summary Results
+print("ABC Final Stats:")
+print(summary(accepted_params))
+write.csv(accepted_params, "abc_results.csv", row.names = FALSE)
