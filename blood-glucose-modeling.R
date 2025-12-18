@@ -114,3 +114,34 @@ prior_1_min <- param_1_value - abs(param_1_value) * range_factor
 prior_1_max <- param_1_value + abs(param_1_value) * range_factor
 prior_2_min <- param_2_value - abs(param_2_value) * range_factor
 prior_2_max <- param_2_value + abs(param_2_value) * range_factor
+
+# Task 3.3: ABC rejection loop
+set.seed(456)
+n_samples <- 50000
+epsilon <- 0.5 
+max_accepted <- 2000
+
+accepted_params <- matrix(NA, nrow = max_accepted, ncol = 2)
+colnames(accepted_params) <- c(paste0("beta_", top_2_indices[1]), paste0("beta_", top_2_indices[2]))
+
+Y_obs <- data$Y
+n_accepted <- 0
+
+print("Starting simulation...")
+for (i in 1:n_samples) {
+  if (n_accepted >= max_accepted) break
+  
+  theta_candidate <- theta_5
+  theta_candidate[param_1_index] <- runif(1, prior_1_min, prior_1_max)
+  theta_candidate[param_2_index] <- runif(1, prior_2_min, prior_2_max)
+  
+  Y_sim <- X5 %*% theta_candidate
+  distance <- mean(abs(Y_obs - Y_sim))
+  
+  if (distance < epsilon) {
+    n_accepted <- n_accepted + 1
+    accepted_params[n_accepted, ] <- c(theta_candidate[param_1_index], theta_candidate[param_2_index])
+  }
+}
+
+accepted_params <- accepted_params[1:n_accepted, ]
