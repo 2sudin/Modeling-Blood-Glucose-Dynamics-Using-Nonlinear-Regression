@@ -107,3 +107,10 @@ param_1_value <- theta_5[param_1_index]
 param_2_value <- theta_5[param_2_index]
 
 print(paste("Selected for ABC: beta_", top_2_indices[1], "and beta_", top_2_indices[2]))
+
+# Task 3.2: Prior distribution setup
+range_factor <- 0.3
+prior_1_min <- param_1_value - abs(param_1_value) * range_factor
+prior_1_max <- param_1_value + abs(param_1_value) * range_factor
+prior_2_min <- param_2_value - abs(param_2_value) * range_factor
+prior_2_max <- param_2_value + abs(param_2_value) * range_factor
