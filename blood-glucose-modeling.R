@@ -145,3 +145,10 @@ for (i in 1:n_samples) {
 }
 
 accepted_params <- accepted_params[1:n_accepted, ]
+
+# Task 3.4: Visualizing Posterior
+par(mfrow = c(2, 2), mar = c(4, 4, 2, 1))
+
+# Histograms
+hist(accepted_params[, 1], breaks = 30, col = "lightblue", main = "Posterior Beta 1")
+hist(accepted_params[, 2], breaks = 30, col = "lightgreen", main = "Posterior Beta 2")
