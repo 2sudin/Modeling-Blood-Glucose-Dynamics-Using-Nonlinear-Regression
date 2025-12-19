@@ -411,110 +411,216 @@ max_accepted <- 2000
 accepted_params <- matrix(NA, nrow = max_accepted, ncol = 2)
 colnames(accepted_params) <- c(paste0("beta_", top_2_indices[1]), paste0("beta_", top_2_indices[2]))
 
-Y_obs <- data$Y
-theta_fixed <- theta_5
-
-for (i in 1:n_samples) {
-  if (n_accepted >= max_accepted) break
-  theta_candidate <- theta_fixed
-  theta_candidate[param_1_index] <- runif(1, prior_1_min, prior_1_max)
-  theta_candidate[param_2_index] <- runif(1, prior_2_min, prior_2_max)
-  
-  Y_sim <- X5 %*% theta_candidate
-  distance <- mean(abs(Y_obs - Y_sim))
-  
-  if (distance < epsilon) {
-    n_accepted <- n_accepted + 1
-    accepted_params[n_accepted, ] <- c(theta_candidate[param_1_index], theta_candidate[param_2_index])
-  }
-}
-
-accepted_params <- accepted_params[1:n_accepted, ]
-
-# Plot Posterior Distributions
-par(mfrow = c(2, 2))
-hist(accepted_params[, 1], breaks = 30, col = "lightblue", main = "Marginal Posterior: Beta 1", freq = FALSE)
-lines(density(accepted_params[, 1]), col = "blue", lwd = 2)
-abline(v = param_1_value, col = "red", lty = 2)
-
-hist(accepted_params[, 2], breaks = 30, col = "lightgreen", main = "Marginal Posterior: Beta 2", freq = FALSE)
-lines(density(accepted_params[, 2]), col = "darkgreen", lwd = 2)
-abline(v = param_2_value, col = "red", lty = 2)
-par(mfrow = c(1, 1))
-
-# Joint posterior (2D scatter plot)
-plot(
-  accepted_params[, 1],
-  accepted_params[, 2],
-  pch  = 16,
-  cex  = 0.5,
-  col  = rgb(0, 0, 1, 0.3),
-  xlab = colnames(accepted_params)[1],
-  ylab = colnames(accepted_params)[2],
-  main = "Joint Posterior Distribution"
-)
-points(
-  param_1_value, 
-  param_2_value, 
-  pch = 3, 
-  col = "red", 
-  cex = 2, 
-  lwd = 3
-)
-legend(
-  "topright",
-  legend = c("Posterior samples", "LS Estimate"),
-  pch    = c(16, 3),
-  col    = c(rgb(0, 0, 1, 0.5), "red"),
-  cex    = 0.8
-)
-
-# Joint posterior (2D density contour)
-library(MASS)
-kde <- kde2d(accepted_params[, 1], accepted_params[, 2], n = 50)
-contour(
-  kde,
-  xlab = colnames(accepted_params)[1],
-  ylab = colnames(accepted_params)[2],
-  main = "Joint Posterior Density Contours",
-  col  = "blue",
-  lwd  = 1.5
-)
-points(
-  param_1_value, 
-  param_2_value, 
-  pch = 3, 
-  col = "red", 
-  cex = 2, 
-  lwd = 3
-)
-
-par(mfrow = c(1, 1))
-
-# Step 5: Summary statistics of posterior distributions
-cat("\n=== Posterior Summary Statistics ===\n")
-cat("\nParameter 1 (", colnames(accepted_params)[1], "):\n")
-cat("  LS Estimate:      ", round(param_1_value, 6), "\n")
-cat("  Posterior Mean:   ", round(mean(accepted_params[, 1]), 6), "\n")
-cat("  Posterior Median: ", round(median(accepted_params[, 1]), 6), "\n")
-cat("  Posterior SD:     ", round(sd(accepted_params[, 1]), 6), "\n")
-cat("  95% Credible Interval: [", 
-    round(quantile(accepted_params[, 1], 0.025), 6), ",", 
-    round(quantile(accepted_params[, 1], 0.975), 6), "]\n")
-
-cat("\nParameter 2 (", colnames(accepted_params)[2], "):\n")
-cat("  LS Estimate:      ", round(param_2_value, 6), "\n")
-cat("  Posterior Mean:   ", round(mean(accepted_params[, 2]), 6), "\n")
-cat("  Posterior Median: ", round(median(accepted_params[, 2]), 6), "\n")
-cat("  Posterior SD:     ", round(sd(accepted_params[, 2]), 6), "\n")
-cat("  95% Credible Interval: [", 
-    round(quantile(accepted_params[, 2], 0.025), 6), ",", 
-    round(quantile(accepted_params[, 2], 0.975), 6), "]\n")
-
-# Correlation between the two parameters in posterior
-posterior_cor <- cor(accepted_params[, 1], accepted_params[, 2])
-cat("\nPosterior Correlation between parameters:", round(posterior_cor, 4), "\n")
-
-# Optional: Save accepted parameters for further analysis
-write.csv(accepted_params, "abc_posterior_samples.csv", row.names = FALSE)
-cat("\nPosterior samples saved to 'abc_posterior_samples.csv'\n")
+ #--------------------------
+           # Task 3: Approximate Bayesian Computation (ABC)
+           #--------------------------
+           
+           # Task3.1: Identify the 2 parameters with largest absolute values from Model 5
+           # EXCLUDE the intercept (first element)
+           theta_5_no_intercept <- theta_5[-1]  # Remove intercept
+           theta_5_abs <- abs(theta_5_no_intercept)
+           
+           print("Model 5 parameters (absolute values, excluding intercept):")
+           print(data.frame(
+             Parameter = paste0("beta_", 1:length(theta_5_no_intercept)),
+             Value = theta_5_no_intercept,
+             Absolute = theta_5_abs
+           ))
+           
+           # Find indices of 2 largest parameters (excluding intercept)
+           top_2_indices <- order(theta_5_abs, decreasing = TRUE)[1:2]
+           print(paste("Top 2 parameters by absolute value: beta_", 
+                       paste(top_2_indices, collapse = " and beta_")))
+           
+           # Extract the 2 parameter values
+           # Note: add 1 to indices because theta_5 includes intercept at position 1
+           param_1_index <- top_2_indices[1] + 1  # +1 to account for intercept in theta_5
+           param_2_index <- top_2_indices[2] + 1
+           param_1_value <- theta_5[param_1_index]
+           param_2_value <- theta_5[param_2_index]
+           
+           print(paste("Parameter 1: beta_", top_2_indices[1], "=", param_1_value))
+           print(paste("Parameter 2: beta_", top_2_indices[2], "=", param_2_value))
+           
+           # Task 3.2: Define Uniform prior distributions around estimated values
+           # Choose a reasonable range (e.g., ±30% of the absolute value)
+           range_factor <- 0.3
+           
+           prior_1_min <- param_1_value - abs(param_1_value) * range_factor
+           prior_1_max <- param_1_value + abs(param_1_value) * range_factor
+           
+           prior_2_min <- param_2_value - abs(param_2_value) * range_factor
+           prior_2_max <- param_2_value + abs(param_2_value) * range_factor
+           
+           print(paste("Prior for parameter 1: Uniform(", 
+                       round(prior_1_min, 6), ",", round(prior_1_max, 6), ")"))
+           print(paste("Prior for parameter 2: Uniform(", 
+                       round(prior_2_min, 6), ",", round(prior_2_max, 6), ")"))
+           
+           # Step 3: Rejection ABC implementation
+           set.seed(456)  # For reproducibility
+           
+           # ABC settings
+           n_samples <- 50000      # Number of samples to draw from prior
+           epsilon <- 0.05          # Tolerance threshold (adjust based on your data scale)
+           n_accepted <- 0         # Counter for accepted samples
+           max_accepted <- 2000    # Target number of accepted samples
+           
+           # Storage for accepted parameters
+           accepted_params <- matrix(NA, nrow = max_accepted, ncol = 2)
+           colnames(accepted_params) <- c(
+             paste0("beta_", top_2_indices[1]),
+             paste0("beta_", top_2_indices[2])
+           )
+           
+           # Summary statistics function
+           summary_stats <- function(y) {
+             c(
+               mean = mean(y),
+               sd   = sd(y)
+             )
+           }
+           
+           S_obs <- summary_stats(Y_obs)
+           
+           set.seed(999)
+           
+           n_pilot <- 2000
+           pilot_dist <- numeric(n_pilot)
+           
+           for (i in 1:n_pilot) {
+             theta_test <- theta_5
+             theta_test[param_1_index] <- runif(1, prior_1_min, prior_1_max)
+             theta_test[param_2_index] <- runif(1, prior_2_min, prior_2_max)
+             
+             Y_sim <- X5 %*% theta_test
+             S_sim <- summary_stats(Y_sim)
+             
+             pilot_dist[i] <- sqrt(sum((S_obs - S_sim)^2))
+           }
+           
+           # Choose epsilon as top 5%
+           epsilon <- quantile(pilot_dist, 0.05)
+           epsilon
+           
+           set.seed(456)
+           
+           n_samples    <- 50000
+           max_accepted <- 2000
+           n_accepted   <- 0
+           
+           accepted_params <- matrix(NA, nrow = max_accepted, ncol = 2)
+           colnames(accepted_params) <- c(
+             paste0("beta_", top_2_indices[1]),
+             paste0("beta_", top_2_indices[2])
+           )
+           
+           
+           for (i in 1:n_samples) {
+             if (n_accepted >= max_accepted) break
+             
+             theta_candidate <- theta_5
+             theta_candidate[param_1_index] <- runif(1, prior_1_min, prior_1_max)
+             theta_candidate[param_2_index] <- runif(1, prior_2_min, prior_2_max)
+             
+             Y_sim <- X5 %*% theta_candidate
+             S_sim <- summary_stats(Y_sim)
+             
+             distance <- sqrt(sum((S_obs - S_sim)^2))
+             
+             if (distance < epsilon) {
+               n_accepted <- n_accepted + 1
+               accepted_params[n_accepted, ] <- theta_candidate[c(param_1_index, param_2_index)]
+             }
+             
+             if (i %% 10000 == 0) {
+               cat("Iteration", i, "- Accepted:", n_accepted, "\n")
+             }
+           }
+           
+           accepted_params <- accepted_params[1:n_accepted, , drop = FALSE]
+           
+           cat("Total accepted:", n_accepted, "\n")
+           cat("Acceptance rate:", round(100 * n_accepted / n_samples, 2), "%\n")
+           
+           par(mfrow = c(1, 2))
+           
+           hist(accepted_params[,1],
+                breaks = 30,
+                freq = FALSE,
+                col = "lightblue",
+                border = "white",
+                main = paste("Posterior:", colnames(accepted_params)[1]),
+                xlab = colnames(accepted_params)[1])
+           
+           abline(v = param_1_value, col = "red", lwd = 2, lty = 2)
+           lines(density(accepted_params[,1]), col = "blue", lwd = 2)
+           
+           hist(accepted_params[,2],
+                breaks = 30,
+                freq = FALSE,
+                col = "lightgreen",
+                border = "white",
+                main = paste("Posterior:", colnames(accepted_params)[2]),
+                xlab = colnames(accepted_params)[2])
+           
+           abline(v = param_2_value, col = "red", lwd = 2, lty = 2)
+           lines(density(accepted_params[,2]), col = "darkgreen", lwd = 2)
+           
+           par(mfrow = c(1, 1))
+           
+           plot(accepted_params,
+                pch = 16,
+                col = rgb(0, 0, 1, 0.3),
+                main = "Joint Posterior Distribution",
+                xlab = colnames(accepted_params)[1],
+                ylab = colnames(accepted_params)[2])
+           
+           points(param_1_value, param_2_value,
+                  pch = 3, col = "red", lwd = 3)
+           
+           accepted_params <- as.matrix(accepted_params)
+           
+           par(mfrow = c(1, 2), mar = c(4, 4, 3, 1))
+           
+           # Parameter 1   plot posterior n joint
+           hist(accepted_params[,1],
+                breaks = 30,
+                freq = FALSE,
+                col = "lightblue",
+                border = "white",
+                main = paste("Marginal Posterior:", colnames(accepted_params)[1]),
+                xlab = colnames(accepted_params)[1],
+                ylab = "Density")
+           
+           lines(density(accepted_params[,1]), col = "blue", lwd = 2)
+           abline(v = param_1_value, col = "red", lwd = 2, lty = 2)
+           
+           legend("topright",
+                  legend = c("Posterior", "LS estimate"),
+                  col = c("blue", "red"),
+                  lwd = 2,
+                  lty = c(1, 2),
+                  cex = 0.8)
+           
+           # Parameter 2
+           hist(accepted_params[,2],
+                breaks = 30,
+                freq = FALSE,
+                col = "lightgreen",
+                border = "white",
+                main = paste("Marginal Posterior:", colnames(accepted_params)[2]),
+                xlab = colnames(accepted_params)[2],
+                ylab = "Density")
+           
+           lines(density(accepted_params[,2]), col = "darkgreen", lwd = 2)
+           abline(v = param_2_value, col = "red", lwd = 2, lty = 2)
+           
+           legend("topright",
+                  legend = c("Posterior", "LS estimate"),
+                  col = c("darkgreen", "red"),
+                  lwd = 2,
+                  lty = c(1, 2),
+                  cex = 0.8)
+           
+           par(mfrow = c(1, 1))
